@@ -16,14 +16,34 @@ import ItemForm from './components/ItemForm';
 export default function App() {
   // Authentication & Master Password State
   const [masterPassword, setMasterPassword] = useState<string | null>(null);
-  const [vaultPayload, setVaultPayload] = useState<EncryptedVaultPayload | null>(null);
+  const [vaultPayload, setVaultPayload] = useState<EncryptedVaultPayload | null>(() => {
+    const savedPayload = localStorage.getItem('vault_payload');
+    if (!savedPayload) return null;
+
+    try {
+      return JSON.parse(savedPayload) as EncryptedVaultPayload;
+    } catch (error) {
+      console.error('Stored vault payload is invalid:', error);
+      localStorage.removeItem('vault_payload');
+      return null;
+    }
+  });
   
   // Decrypted State (Kept strictly in memory during runtime)
   const [items, setItems] = useState<VaultItem[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [settings, setSettings] = useState<UserSettings>({
-    theme: 'dark',
-    lockTimeoutMinutes: 15
+  const [settings, setSettings] = useState<UserSettings>(() => {
+    const defaultSettings: UserSettings = { theme: 'dark', lockTimeoutMinutes: 15 };
+    const savedSettings = localStorage.getItem('vault_settings');
+    if (!savedSettings) return defaultSettings;
+
+    try {
+      return { ...defaultSettings, ...JSON.parse(savedSettings) };
+    } catch (error) {
+      console.error('Stored settings are invalid:', error);
+      localStorage.removeItem('vault_settings');
+      return defaultSettings;
+    }
   });
 
   // Google Drive OAuth & Synchronisation state
@@ -51,21 +71,9 @@ export default function App() {
   // Load local state initially
   useEffect(() => {
     // 1. Theme application
-    const savedPayload = localStorage.getItem('vault_payload');
-    if (savedPayload) {
-      setVaultPayload(JSON.parse(savedPayload));
-    }
-
-    const savedSettings = localStorage.getItem('vault_settings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      setSettings(parsed);
-      applyTheme(parsed.theme);
-    } else {
-      const defaultSettings = { theme: 'dark', lockTimeoutMinutes: 15 };
-      setSettings(defaultSettings);
-      localStorage.setItem('vault_settings', JSON.stringify(defaultSettings));
-      applyTheme('dark');
+    applyTheme(settings.theme);
+    if (!localStorage.getItem('vault_settings')) {
+      localStorage.setItem('vault_settings', JSON.stringify(settings));
     }
 
     // 2. Parse OAuth GDrive redirects

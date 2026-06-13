@@ -13,8 +13,8 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isSetup, setIsSetup] = useState(payload === null);
   const [isLoading, setIsLoading] = useState(false);
+  const isSetup = payload === null;
 
   // Strength check
   const checkPasswordStrength = (p: string) => {
