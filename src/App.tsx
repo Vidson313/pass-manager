@@ -7,10 +7,12 @@ import {
 import { VaultItem, Folder, UserSettings, VaultState, EncryptedVaultPayload } from './types';
 import { encryptVault, checkMasterPassword } from './utils/crypto';
 import { generateTOTP } from './utils/totp';
+import { copySensitiveText } from './utils/clipboard';
 import UnlockScreen from './components/UnlockScreen';
 import PasswordGenerator from './components/PasswordGenerator';
 import CsvImporter from './components/CsvImporter';
 import SettingsPanel from './components/SettingsPanel';
+import AboutPanel from './components/AboutPanel';
 import ItemForm from './components/ItemForm';
 
 export default function App() {
@@ -56,7 +58,7 @@ export default function App() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'create' | 'edit' | 'csv' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'create' | 'edit' | 'csv' | 'settings' | 'about'>('dashboard');
   const [newFolderName, setNewFolderName] = useState('');
   const [showFolderModal, setShowFolderModal] = useState(false);
 
@@ -67,6 +69,16 @@ export default function App() {
   // Real-time TOTP state
   const [totpCode, setTotpCode] = useState('');
   const [totpCountdown, setTotpCountdown] = useState(30);
+
+  const lockVault = () => {
+    setMasterPassword(null);
+    setItems([]);
+    setFolders([]);
+    setSelectedItemId(null);
+    setShowSensitive({});
+    setTotpCode('');
+    setClipboardCopyField(null);
+  };
 
   // Load local state initially
   useEffect(() => {
@@ -83,15 +95,45 @@ export default function App() {
       if (tokenMatch && tokenMatch[1]) {
         const token = tokenMatch[1];
         setGdriveToken(token);
-        localStorage.setItem('gdrive_token', token);
+        sessionStorage.setItem('gdrive_token', token);
+        localStorage.removeItem('gdrive_token');
         // Clear hash smoothly
         window.history.replaceState(null, '', window.location.pathname);
       }
     } else {
-      const token = localStorage.getItem('gdrive_token');
+      localStorage.removeItem('gdrive_token');
+      const token = sessionStorage.getItem('gdrive_token');
       if (token) setGdriveToken(token);
     }
   }, []);
+
+  useEffect(() => {
+    if (!masterPassword) return;
+
+    const timeoutMs = Math.max(1, settings.lockTimeoutMinutes || 15) * 60 * 1000;
+    let lockTimer = window.setTimeout(lockVault, timeoutMs);
+
+    const resetTimer = () => {
+      window.clearTimeout(lockTimer);
+      lockTimer = window.setTimeout(lockVault, timeoutMs);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        lockVault();
+      }
+    };
+
+    const activityEvents: Array<keyof WindowEventMap> = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    activityEvents.forEach(eventName => window.addEventListener(eventName, resetTimer, { passive: true }));
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearTimeout(lockTimer);
+      activityEvents.forEach(eventName => window.removeEventListener(eventName, resetTimer));
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [masterPassword, settings.lockTimeoutMinutes]);
 
   // Update theme helper
   const applyTheme = (themeValue: 'light' | 'dark') => {
@@ -249,7 +291,7 @@ export default function App() {
     }
   };
 
-  const handleDownloadGDrive = async () => {
+  const handleDownloadGDrive = async (): Promise<void> => {
     if (!gdriveToken) return;
     setIsSyncing(true);
     try {
@@ -276,29 +318,100 @@ export default function App() {
         }
       );
       
+      if (!downloadRes.ok) {
+        throw new Error('بارگیری محتوای فایل ابری با شکست مواجه شد.');
+      }
+      
       const payload: EncryptedVaultPayload = await downloadRes.json();
+
+      if (!masterPassword) {
+        localStorage.setItem('vault_payload', JSON.stringify(payload));
+        setVaultPayload(payload);
+        alert('vault رمزنگاری‌شده از Google Drive دریافت شد. اکنون رمز مستر خود را وارد کنید.');
+        return;
+      }
       
       // Decrypt cloud data with current Master password
-      if (masterPassword) {
-        const decrypted = await checkMasterPassword(masterPassword, payload);
-          if (decrypted) {
-            const confirmed = window.confirm(
-              'اطلاعات گاوصندوق روی ابری گوگل یافت شد. آیا مایل هستید کل اطلاعات محلی شما پاک شده و این اطلاعات جایگزین شود؟'
-            );
-            if (confirmed) {
-              localStorage.setItem('vault_payload', JSON.stringify(payload));
-              setVaultPayload(payload);
-              window.location.reload(); // Quick refresh to load decrypted state
-            }
-          } else {
-            alert('خطای هموارسازی: پسورد ابری و پسورد فعلی مستر شما یکسان نیستند.');
-          }
+      const decrypted = await checkMasterPassword(masterPassword, payload);
+      if (decrypted) {
+        const confirmed = window.confirm(
+          'اطلاعات گاوصندوق روی ابری گوگل یافت شد. آیا مایل هستید کل اطلاعات محلی شما پاک شده و این اطلاعات جایگزین شود؟'
+        );
+        if (confirmed) {
+          localStorage.setItem('vault_payload', JSON.stringify(payload));
+          setVaultPayload(payload);
+          window.location.reload(); // Quick refresh to load decrypted state
+        }
+      } else {
+        alert('خطای هموارسازی: پسورد ابری و پسورد فعلی مستر شما یکسان نیستند.');
       }
     } catch (err: any) {
       alert(`بارگیری با خطا مواجه شد: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const deleteCloudVault = async (): Promise<void> => {
+    if (!gdriveToken) return;
+
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D%27vault.enc%27+and+trashed%3Dfalse`,
+      {
+        headers: { Authorization: `Bearer ${gdriveToken}` }
+      }
+    );
+
+    if (!searchRes.ok) {
+      if (searchRes.status === 401) {
+        handleDisconnectGDrive();
+      }
+      throw new Error('خطا در جستجوی فایل ابری برای حذف.');
+    }
+
+    const searchData = await searchRes.json();
+    const files = searchData.files || [];
+
+    await Promise.all(files.map((file: { id: string }) => fetch(
+      `https://www.googleapis.com/drive/v3/files/${file.id}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${gdriveToken}` }
+      }
+    )));
+  };
+
+  const handleResetVault = async () => {
+    const confirmed = window.confirm(
+      'این کار تمام اطلاعات محلی برنامه را پاک می‌کند. اگر Google Drive وصل باشد، فایل vault.enc ابری هم حذف می‌شود. ادامه می‌دهید؟'
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsSyncing(true);
+      if (gdriveToken) {
+        await deleteCloudVault();
+      }
+    } catch (error: any) {
+      const continueLocalOnly = window.confirm(
+        `حذف فایل ابری با خطا مواجه شد: ${error?.message || 'خطای نامشخص'}\nآیا فقط داده‌های محلی پاک شوند؟`
+      );
+      if (!continueLocalOnly) {
+        setIsSyncing(false);
+        return;
+      }
+    }
+
+    localStorage.removeItem('vault_payload');
+    localStorage.removeItem('vault_settings');
+    localStorage.removeItem('gdrive_token');
+    sessionStorage.removeItem('gdrive_token');
+    setGdriveToken(null);
+    setGdriveFileId(null);
+    setVaultPayload(null);
+    setSettings({ theme: 'dark', lockTimeoutMinutes: 15 });
+    lockVault();
+    setIsSyncing(false);
   };
 
   const handleConnectGDrive = () => {
@@ -322,13 +435,20 @@ export default function App() {
     setGdriveToken(null);
     setGdriveFileId(null);
     localStorage.removeItem('gdrive_token');
+    sessionStorage.removeItem('gdrive_token');
   };
 
   // Authentication callbacks
-  const handleUnlocked = (password: string, decryptedItems: VaultItem[], decryptedFolders: Folder[]) => {
+  const handleUnlocked = (password: string, decryptedItems: VaultItem[], decryptedFolders: Folder[], encryptedPayload?: EncryptedVaultPayload) => {
     setMasterPassword(password);
     setItems(decryptedItems);
     setFolders(decryptedFolders);
+    if (encryptedPayload) {
+      setVaultPayload(encryptedPayload);
+      if (gdriveToken) {
+        syncToGDrive(encryptedPayload);
+      }
+    }
     setActiveView('dashboard');
   };
 
@@ -348,6 +468,9 @@ export default function App() {
       setVaultPayload(nextEncrypted);
       localStorage.setItem('vault_payload', JSON.stringify(nextEncrypted));
       setMasterPassword(newPass);
+      if (gdriveToken) {
+        syncToGDrive(nextEncrypted);
+      }
       return true;
     } catch (e) {
       return false;
@@ -396,11 +519,17 @@ export default function App() {
   };
 
   // Clipboard copying triggers
-  const handleCopyToClipboard = (val?: string, fieldName?: string) => {
+  const handleCopyToClipboard = async (val?: string, fieldName?: string) => {
     if (!val) return;
-    navigator.clipboard.writeText(val);
-    setClipboardCopyField(fieldName || 'generic');
-    setTimeout(() => setClipboardCopyField(null), 1500);
+
+    try {
+      await copySensitiveText(val);
+      setClipboardCopyField(fieldName || 'generic');
+      setTimeout(() => setClipboardCopyField(null), 1500);
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+      alert('کپی کردن در کلیپ‌بورد با خطا مواجه شد.');
+    }
   };
 
   // Mutator actions
@@ -468,7 +597,12 @@ export default function App() {
     return (
       <UnlockScreen 
         payload={vaultPayload} 
-        onUnlocked={handleUnlocked} 
+        onUnlocked={handleUnlocked}
+        gdriveToken={gdriveToken}
+        isSyncing={isSyncing}
+        onConnectGDrive={handleConnectGDrive}
+        onDownloadGDrive={handleDownloadGDrive}
+        onResetVault={handleResetVault}
       />
     );
   }
@@ -477,17 +611,17 @@ export default function App() {
   const selectedItem = items.find(i => i.id === selectedItemId);
 
   return (
-    <div className="min-h-screen bg-neutral-950 font-sans flex flex-col transition-colors duration-300 selection:bg-neutral-800 selection:text-white" dir="rtl">
+    <div className="min-h-screen app-shell font-sans flex flex-col transition-colors duration-300 selection:bg-brand-400/30 selection:text-white" dir="rtl">
       
       {/* Upper Navigation Bar */}
-      <header className="bg-neutral-900 border-b border-neutral-800 px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 transition-colors duration-300">
+      <header className="bg-[#0f1011]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 transition-colors duration-300">
         <div className="flex items-center gap-2 md:gap-3.5">
-          <div className="w-9 h-9 rounded-lg bg-neutral-950 border border-neutral-800 flex items-center justify-center text-neutral-300 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400/25 to-emerald-400/10 border border-white/10 flex items-center justify-center text-neutral-200 shadow-lg shadow-black/25">
             <KeyRound className="w-5 h-5 text-neutral-300" />
           </div>
           <div>
-            <h1 className="text-sm md:text-base font-serif italic font-extrabold text-white tracking-tight">کلیدبان • Vault Master</h1>
-            <p className="text-[9px] text-neutral-500 font-mono tracking-widest uppercase">Sophisticated Security Core</p>
+            <h1 className="text-sm md:text-base font-heading font-semibold text-white tracking-tight">کلیدبان • Vault Master</h1>
+            <p className="text-[10px] text-neutral-450 font-mono tracking-widest uppercase">Sophisticated Security Core</p>
           </div>
         </div>
 
@@ -498,7 +632,7 @@ export default function App() {
               onClick={() => syncToGDrive()}
               disabled={isSyncing}
               title="همگام سازی با گوگل درایو"
-              className="px-3 py-1.5 rounded-lg border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-neutral-400 flex items-center gap-1.5 text-xs transition cursor-pointer"
+              className="px-3 py-1.5 rounded-lg btn-ghost flex items-center gap-1.5 text-xs transition cursor-pointer disabled:opacity-60"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-neutral-300 ${isSyncing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline font-bold">همگام‌ ابری</span>
@@ -507,25 +641,33 @@ export default function App() {
 
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-850 transition cursor-pointer"
+            className="p-2 rounded-lg btn-ghost transition cursor-pointer"
           >
-            {settings.theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+            {settings.theme === 'light' ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
           </button>
 
           <button
             onClick={() => setActiveView('settings')}
-            className={`p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-850 transition cursor-pointer ${activeView === 'settings' ? 'bg-neutral-800 text-white' : ''}`}
+            className={`p-2 rounded-lg btn-ghost transition cursor-pointer ${activeView === 'settings' ? 'bg-neutral-800 text-white' : ''}`}
             title="تنظیمات"
           >
-            <Settings2 className="w-4.5 h-4.5" />
+            <Settings2 className="w-[18px] h-[18px]" />
           </button>
 
           <button
-            onClick={() => setMasterPassword(null)}
+            onClick={() => setActiveView('about')}
+            className={`px-3 py-2 rounded-lg btn-ghost transition cursor-pointer text-xs font-semibold ${activeView === 'about' ? 'bg-neutral-800 text-white' : ''}`}
+            title="درباره برنامه و نسخه"
+          >
+            درباره
+          </button>
+
+          <button
+            onClick={lockVault}
             className="p-2 rounded-lg text-rose-500 hover:bg-rose-950/20 transition cursor-pointer"
             title="خروج و قفل گاوصندوق"
           >
-            <LogOut className="w-4.5 h-4.5" />
+            <LogOut className="w-[18px] h-[18px]" />
           </button>
         </div>
       </header>
@@ -534,7 +676,7 @@ export default function App() {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         
         {/* PANEL 1: Left Navigation Sidebar */}
-        <aside className="w-full md:w-64 bg-neutral-900 border-l border-b md:border-b-0 border-neutral-800 p-4 shrink-0 transition-colors duration-300">
+        <aside className="w-full md:w-72 bg-[#0f1011]/82 backdrop-blur-xl border-l border-b md:border-b-0 border-white/[0.08] p-4 shrink-0 transition-colors duration-300">
           <div className="space-y-6">
             
             {/* Quick Actions */}
@@ -543,7 +685,7 @@ export default function App() {
                 setActiveView('create');
                 setSelectedItemId(null);
               }}
-              className="w-full py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm"
+              className="w-full py-2.5 btn-primary font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>افزودن مورد جدید</span>
@@ -551,7 +693,7 @@ export default function App() {
 
             {/* Core Type Categories */}
             <div>
-              <h4 className="text-[10px] font-bold text-neutral-500 tracking-wider mb-2.5 uppercase">دسته‌بندی اصلی گاوصندوق</h4>
+              <h4 className="text-[10px] font-semibold text-neutral-450 tracking-wider mb-2.5 uppercase">دسته‌بندی اصلی گاوصندوق</h4>
               <ul className="space-y-1">
                 {[
                   { id: 'all', label: 'همه رمزها و کارت‌ها', icon: KeyRound, count: items.length },
@@ -571,15 +713,15 @@ export default function App() {
                         }}
                         className={`w-full px-3 py-2.5 rounded-lg flex items-center justify-between text-xs transition cursor-pointer ${
                           selectedFilter === cat.id && !selectedFolderId && activeView === 'dashboard'
-                            ? 'bg-neutral-800 text-white font-bold border-r-2 border-neutral-205'
-                            : 'text-neutral-400 hover:text-white hover:bg-neutral-850'
+                            ? 'bg-brand-400/12 text-white font-semibold border-r-2 border-brand-400'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <Icon className={`w-4 h-4 ${selectedFilter === cat.id && !selectedFolderId ? 'text-white' : 'text-neutral-500'}`} />
                           <span>{cat.label}</span>
                         </div>
-                        <span className="font-mono text-[10px] bg-neutral-950 border border-neutral-800 px-2 py-0.5 rounded-full text-neutral-400 font-bold">{cat.count}</span>
+                        <span className="font-mono text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-neutral-350 font-semibold">{cat.count}</span>
                       </button>
                     </li>
                   );
@@ -590,7 +732,7 @@ export default function App() {
             {/* Folders Management section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="text-[10px] font-bold text-neutral-500 tracking-wider uppercase">پوشه‌ها و تفکیک محتوا</h4>
+                <h4 className="text-[10px] font-semibold text-neutral-450 tracking-wider uppercase">پوشه‌ها و تفکیک محتوا</h4>
                 <button
                   type="button"
                   onClick={() => setShowFolderModal(true)}
@@ -694,29 +836,39 @@ export default function App() {
             </div>
           )}
 
+          {activeView === 'about' && (
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <AboutPanel
+                itemCount={items.length}
+                folderCount={folders.length}
+                gdriveConnected={!!gdriveToken}
+              />
+            </div>
+          )}
+
           {activeView === 'dashboard' && (
             <>
               {/* PANEL 2: Middle Items List index */}
-              <section className="w-full md:w-80 border-l border-neutral-800 flex flex-col h-full bg-neutral-900 overflow-hidden transition-colors duration-300">
+              <section className="w-full md:w-88 border-l border-white/[0.08] flex flex-col h-full bg-[#0f1011]/72 backdrop-blur-xl overflow-hidden transition-colors duration-300">
                 
                 {/* Search Bar Block */}
-                <div className="p-3.5 border-b border-neutral-800/85">
+                <div className="p-4 border-b border-white/10">
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="جستجوی عنوان، ایمیل، یا آدرس..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pr-9 pl-3 py-2 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 focus:ring-0 rounded-lg text-xs outline-none text-white placeholder:text-neutral-600 transition"
+                      className="w-full pr-9 pl-3 py-2.5 field-standard rounded-xl text-xs placeholder:text-neutral-600 transition"
                     />
                     <Search className="w-4 h-4 text-neutral-500 absolute top-2.5 right-3" />
                   </div>
                 </div>
 
                 {/* Lists items */}
-                <div className="flex-1 overflow-y-auto divide-y divide-neutral-800/30">
+                <div className="flex-1 overflow-y-auto divide-y divide-white/5">
                   {getFilteredItems().length === 0 ? (
-                    <div className="p-10 text-center text-neutral-600">
+                    <div className="m-4 p-8 text-center text-neutral-500 surface-panel rounded-2xl">
                       <Search className="w-8 h-8 mx-auto text-neutral-705 mb-3" />
                       <p className="text-xs font-sans">هیچ موردی پیدا نشد.</p>
                     </div>
@@ -727,15 +879,15 @@ export default function App() {
                         <div
                           key={item.id}
                           onClick={() => setSelectedItemId(item.id)}
-                          className={`p-3.5 text-right transition cursor-pointer select-none relative ${isSelected ? 'bg-neutral-850/60 border-r-2 border-white' : 'hover:bg-neutral-850/20'}`}
+                          className={`p-3.5 text-right transition cursor-pointer select-none relative focus-within:bg-white/5 ${isSelected ? 'bg-brand-400/10 border-r-2 border-brand-400' : 'hover:bg-white/[0.045]'}`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex gap-2.5 items-center truncate">
-                              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-neutral-800 bg-neutral-950 text-neutral-450">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/10 bg-white/[0.035] text-neutral-350">
                                 {item.type === 'login' ? <Key className="w-4 h-4" /> : item.type === 'card' ? <CreditCard className="w-4 h-4" /> : <StickyNote className="w-4 h-4" />}
                               </div>
                               <div className="truncate space-y-0.5">
-                                <h5 className="text-[13px] font-bold text-neutral-200 truncate">{item.title}</h5>
+                                <h5 className="text-[13px] font-semibold text-neutral-100 truncate">{item.title}</h5>
                                 {item.type === 'login' && item.username && (
                                   <p className="text-[11px] text-neutral-500 font-mono truncate">{item.username}</p>
                                 )}
@@ -764,10 +916,10 @@ export default function App() {
               </section>
 
               {/* PANEL 3: Right selected item detail preview */}
-              <section className="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-950 transition-colors duration-300">
+              <section className="flex-1 overflow-y-auto p-4 md:p-6 bg-black/10 transition-colors duration-300">
                 {!selectedItem ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 text-neutral-500">
-                    <div className="w-16 h-16 rounded-full border border-dashed border-neutral-800 flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 rounded-2xl border border-dashed border-white/15 bg-white/[0.025] flex items-center justify-center mb-4">
                       <Unlock className="w-6 h-6 text-neutral-600" />
                     </div>
                     <h3 className="font-bold font-heading text-neutral-300 text-xs mb-1 uppercase tracking-wider">صندوق قفل و محفوظ است</h3>
@@ -777,7 +929,7 @@ export default function App() {
                   <div className="space-y-6 max-w-xl mx-auto">
                     
                     {/* Item Details Header block */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 relative overflow-hidden">
+                    <div className="glass-panel rounded-2xl p-5 relative overflow-hidden">
                       {/* Subtle elegant identity line indicator */}
                       <div className={`absolute top-0 left-0 right-0 h-[2px] ${selectedItem.type === 'note' ? 'bg-neutral-550' : selectedItem.type === 'card' ? 'bg-rose-600' : 'bg-neutral-300'}`} />
                       
@@ -786,7 +938,7 @@ export default function App() {
                           <span className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-neutral-950 border border-neutral-850 text-neutral-400 font-mono">
                             {selectedItem.type === 'login' ? 'حساب کاربری / LOGIN' : selectedItem.type === 'card' ? 'کارت نقدی-اعتباری / CARD' : 'یادداشت کلاینت / SECURE NOTE'}
                           </span>
-                          <h2 className="text-xl font-serif italic font-bold text-white mt-3.5 tracking-tight">{selectedItem.title}</h2>
+                          <h2 className="text-2xl font-heading font-semibold text-white mt-3.5 tracking-tight">{selectedItem.title}</h2>
                           
                           {/* Created timeline */}
                           <p className="text-[10px] text-neutral-500 mt-1.5 font-mono tracking-wide">
@@ -806,7 +958,7 @@ export default function App() {
                             className="p-2 text-rose-500 hover:bg-rose-950/20 rounded-lg transition cursor-pointer"
                             title="حذف کامل از ماتریکس"
                           >
-                            <Trash2 className="w-4.5 h-4.5" />
+                            <Trash2 className="w-[18px] h-[18px]" />
                           </button>
                         </div>
                       </div>
@@ -814,7 +966,7 @@ export default function App() {
 
                     {/* TOTP Active Token segment */}
                     {selectedItem.type === 'login' && selectedItem.totpSecret && (
-                      <div className="bg-neutral-900 border border-neutral-850/80 rounded-xl p-5 flex items-center justify-between shadow-xs">
+                      <div className="surface-panel rounded-2xl p-5 flex items-center justify-between shadow-xs">
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold text-neutral-450 tracking-wider">راز تأیید هویت دو مرحله‌ای (TOTP 2FA)</span>
                           {totpCode ? (
@@ -840,20 +992,20 @@ export default function App() {
                           <div className="w-9 h-9 rounded-full border border-neutral-800 flex items-center justify-center relative bg-neutral-950">
                             <span className="text-xs font-mono font-bold text-neutral-200">{totpCountdown}</span>
                           </div>
-                          <span className="text-[9px] text-neutral-505 mt-1">ثانیه</span>
+                          <span className="text-[9px] text-neutral-500 mt-1">ثانیه</span>
                         </div>
                       </div>
                     )}
 
                     {/* Main Details card table */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 md:p-6 space-y-5">
+                    <div className="glass-panel rounded-2xl p-5 md:p-6 space-y-5">
                       
                       {/* LOGIN Specific Render */}
                       {selectedItem.type === 'login' && (
                         <div className="space-y-4">
                           <div>
                             <span className="text-[10px] font-bold text-neutral-450 block mb-1.5 uppercase tracking-wider">نام کاربری یا ایمیل</span>
-                            <div className="flex items-center justify-between p-3 bg-neutral-950 rounded-lg border border-neutral-850">
+                            <div className="flex items-center justify-between p-3 field-standard rounded-xl">
                               <span className="font-mono text-xs text-neutral-200 select-all">{selectedItem.username || 'بدون نام کاربری'}</span>
                               {selectedItem.username && (
                                 <button
@@ -868,7 +1020,7 @@ export default function App() {
 
                           <div>
                             <span className="text-[10px] font-bold text-neutral-450 block mb-1.5 uppercase tracking-wider">کلمه عبور (Password)</span>
-                            <div className="flex items-center justify-between p-3 bg-neutral-950 rounded-lg border border-neutral-850">
+                            <div className="flex items-center justify-between p-3 field-standard rounded-xl">
                               <span className="font-mono text-xs text-neutral-200 select-all">
                                 {showSensitive[selectedItem.id] ? selectedItem.password : '••••••••••••••••'}
                               </span>
@@ -892,7 +1044,7 @@ export default function App() {
                           {selectedItem.url && (
                             <div>
                               <span className="text-[10px] font-bold text-neutral-450 block mb-1.5 uppercase tracking-wider">آدرس مستقیم وبگاه (URL)</span>
-                              <div className="flex items-center justify-between p-3 bg-neutral-950 rounded-lg border border-neutral-850">
+                              <div className="flex items-center justify-between p-3 field-standard rounded-xl">
                                 <a
                                   href={selectedItem.url}
                                   target="_blank"
@@ -947,7 +1099,7 @@ export default function App() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <span className="text-[10px] font-bold text-neutral-550 block mb-1.5">شماره کامل کارت</span>
-                              <div className="flex items-center justify-between p-3 bg-neutral-950 rounded-lg border border-neutral-850">
+                              <div className="flex items-center justify-between p-3 field-standard rounded-xl">
                                 <span className="font-mono text-xs select-all text-white">{selectedItem.number}</span>
                                 <button onClick={() => handleCopyToClipboard(selectedItem.number, 'cnum')}>
                                   {clipboardCopyField === 'cnum' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-neutral-500" />}
@@ -958,7 +1110,7 @@ export default function App() {
                             {selectedItem.pin && (
                               <div>
                                 <span className="text-[10px] font-bold text-neutral-550 block mb-1.5">کاربین رمز عبور کارت (PIN)</span>
-                                <div className="flex items-center justify-between p-3 bg-neutral-950 rounded-lg border border-neutral-850">
+                                <div className="flex items-center justify-between p-3 field-standard rounded-xl">
                                   <span className="font-mono text-xs select-all text-white">
                                     {showSensitive[`${selectedItem.id}-pin`] ? selectedItem.pin : '••••'}
                                   </span>
@@ -1036,7 +1188,7 @@ export default function App() {
       {/* Sub Folder Modal drawer */}
       {showFolderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-xs" dir="rtl">
-          <div className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-2xl transition">
+          <div className="w-full max-w-sm glass-panel rounded-2xl p-5 transition">
             <h3 className="font-bold text-white text-sm mb-3 font-heading">ساخت پوشه نظم‌دهی جدید</h3>
             <form onSubmit={handleCreateFolder}>
               <input
@@ -1045,20 +1197,20 @@ export default function App() {
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 autoFocus
-                className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-600 mb-4"
+                className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs placeholder:text-neutral-600 mb-4"
                 required
               />
               <div className="flex gap-2.5">
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs rounded-lg transition cursor-pointer"
+                  className="flex-1 py-2 btn-primary font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   اضافه کردن پوشه
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowFolderModal(false)}
-                  className="px-4 py-2 bg-neutral-950 hover:bg-neutral-850 border border-neutral-800 text-neutral-300 text-xs font-semibold rounded-lg transition cursor-pointer"
+                  className="px-4 py-2 btn-ghost text-xs font-semibold rounded-xl transition cursor-pointer"
                 >
                   انصراف
                 </button>

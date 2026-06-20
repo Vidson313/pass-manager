@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Sparkles, Folder as FolderIcon, Tag, Save, ArrowLeft, KeyRound, CreditCard, StickyNote, HelpCircle } from 'lucide-react';
 import { VaultItem, Folder, ItemType } from '../types';
 import PasswordGenerator from './PasswordGenerator';
+import { createSecureId } from '../utils/random';
 
 interface ItemFormProps {
   item?: VaultItem;
@@ -47,7 +48,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
     }
 
     const baseData = {
-      id: item?.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      id: item?.id || createSecureId('item'),
       title: title.trim(),
       favorite,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -97,10 +98,10 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
   };
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 md:p-6 shadow-2xl max-w-2xl mx-auto" dir="rtl">
+    <div className="glass-panel rounded-2xl p-5 md:p-6 max-w-3xl mx-auto" dir="rtl">
       
       {/* Header Controls */}
-      <div className="flex justify-between items-center mb-6 pb-4 border-b border-neutral-800/80">
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
         <button
           type="button"
           onClick={onCancel}
@@ -109,7 +110,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
           <ArrowLeft className="w-4 h-4 -scale-x-100" />
           <span>بازگشت</span>
         </button>
-        <span className="text-sm font-bold text-white font-heading">
+        <span className="text-base font-semibold text-white font-heading">
           {isEditing ? 'ویرایش اطلاعات گاوصندوق • Edit Item' : 'کارت‌پوشه جدید در گاوصندوق • New Item'}
         </span>
       </div>
@@ -124,11 +125,11 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               onClick={() => setType('login')}
               className={`py-3 px-3 rounded-lg border flex flex-col items-center gap-2 transition-all cursor-pointer ${
                 type === 'login'
-                  ? 'border-neutral-200 bg-neutral-850 text-white font-bold shadow-sm'
-                  : 'border-neutral-800 text-neutral-450 hover:bg-neutral-850'
+                  ? 'border-brand-400/60 bg-brand-400/12 text-white font-bold shadow-sm'
+                  : 'border-white/[0.08] text-neutral-450 hover:bg-white/[0.05]'
               }`}
             >
-              <KeyRound className="w-4.5 h-4.5" />
+              <KeyRound className="w-[18px] h-[18px]" />
               <span className="text-xs">حساب ورودی (Login)</span>
             </button>
             <button
@@ -136,11 +137,11 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               onClick={() => setType('card')}
               className={`py-3 px-3 rounded-lg border flex flex-col items-center gap-2 transition-all cursor-pointer ${
                 type === 'card'
-                  ? 'border-neutral-200 bg-neutral-850 text-white font-bold shadow-sm'
-                  : 'border-neutral-800 text-neutral-450 hover:bg-neutral-850'
+                  ? 'border-brand-400/60 bg-brand-400/12 text-white font-bold shadow-sm'
+                  : 'border-white/[0.08] text-neutral-450 hover:bg-white/[0.05]'
               }`}
             >
-              <CreditCard className="w-4.5 h-4.5" />
+              <CreditCard className="w-[18px] h-[18px]" />
               <span className="text-xs">کارت بانکی (Card)</span>
             </button>
             <button
@@ -148,11 +149,11 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               onClick={() => setType('note')}
               className={`py-3 px-3 rounded-lg border flex flex-col items-center gap-2 transition-all cursor-pointer ${
                 type === 'note'
-                  ? 'border-neutral-200 bg-neutral-850 text-white font-bold shadow-sm'
-                  : 'border-neutral-800 text-neutral-450 hover:bg-neutral-850'
+                  ? 'border-brand-400/60 bg-brand-400/12 text-white font-bold shadow-sm'
+                  : 'border-white/[0.08] text-neutral-450 hover:bg-white/[0.05]'
               }`}
             >
-              <StickyNote className="w-4.5 h-4.5" />
+              <StickyNote className="w-[18px] h-[18px]" />
               <span className="text-xs">یادداشت امن (Note)</span>
             </button>
           </div>
@@ -166,7 +167,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="مثلاً گوگل ایمیل شخصی، حساب دیجی‌کالا، ملّی‌کارت و..."
-            className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-600 focus:ring-0"
+            className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs placeholder:text-neutral-600"
             required
           />
         </div>
@@ -182,7 +183,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
 
@@ -204,7 +205,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white placeholder:text-neutral-700 focus:ring-0"
+                    className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left placeholder:text-neutral-700"
                   />
                   <button
                     type="button"
@@ -219,7 +220,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
 
             {/* Embedded Password Generator Drawer */}
             {showGen && (
-              <div className="p-4 bg-neutral-950 border border-neutral-850 rounded-lg">
+              <div className="p-4 surface-panel rounded-xl">
                 <PasswordGenerator onUsePassword={handleUsePassword} inline />
               </div>
             )}
@@ -232,7 +233,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/login"
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
 
@@ -251,7 +252,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   value={totpSecret}
                   onChange={(e) => setTotpSecret(e.target.value)}
                   placeholder="اختیاری: JBSWY3DPEHPK3PXP..."
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left placeholder:text-neutral-700 outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left placeholder:text-neutral-700"
                 />
               </div>
             </div>
@@ -280,7 +281,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   placeholder="6037-9912-3456-7890"
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
             </div>
@@ -294,7 +295,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   onChange={(e) => setExpiry(e.target.value)}
                   placeholder="06/09"
                   maxLength={5}
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
 
@@ -306,7 +307,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   onChange={(e) => setCvv(e.target.value)}
                   placeholder="1234"
                   maxLength={4}
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
 
@@ -318,7 +319,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="••••"
                   maxLength={6}
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono text-left outline-none text-white focus:ring-0"
+                  className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs font-mono text-left"
                 />
               </div>
 
@@ -414,7 +415,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="شخصی، کاری، مالی، اجتماعی"
-              className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-600 focus:ring-0"
+              className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs placeholder:text-neutral-600"
             />
           </div>
         </div>
@@ -428,7 +429,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               onChange={(e) => setNotes(e.target.value)}
               placeholder="مثلاً کدهای بازیابی اضطراری، زمان انقضای رمز عبور..."
               rows={2}
-              className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-600 focus:ring-0"
+              className="w-full px-3.5 py-2.5 field-standard rounded-xl text-xs placeholder:text-neutral-600"
             />
           </div>
         )}
@@ -440,7 +441,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
               type="checkbox"
               checked={favorite}
               onChange={(e) => setFavorite(e.target.checked)}
-              className="rounded border-neutral-800 text-white focus:ring-neutral-700 bg-neutral-950 w-4.5 h-4.5 cursor-pointer"
+              className="rounded border-white/[0.08] text-white focus:ring-brand-400 bg-[#0f1011] w-[18px] h-[18px] cursor-pointer"
             />
             <div className="flex flex-col">
               <span className="font-bold text-neutral-200">افزودن به برگزیده‌ها ⭐</span>

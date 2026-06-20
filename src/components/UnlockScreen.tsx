@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, ShieldAlert, Eye, EyeOff, KeyRound, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Lock, Unlock, ShieldAlert, Eye, EyeOff, KeyRound, Check, AlertTriangle, ShieldCheck, Cloud, RefreshCw, Trash2 } from 'lucide-react';
 import { EncryptedVaultPayload } from '../types';
 import { decryptVault, encryptVault } from '../utils/crypto';
 
 interface UnlockScreenProps {
   payload: EncryptedVaultPayload | null;
-  onUnlocked: (password: string, decryptedItems: any, decryptedFolders: any) => void;
+  onUnlocked: (password: string, decryptedItems: any, decryptedFolders: any, encryptedPayload?: EncryptedVaultPayload) => void;
+  gdriveToken: string | null;
+  isSyncing: boolean;
+  onConnectGDrive: () => void;
+  onDownloadGDrive: () => Promise<void>;
+  onResetVault: () => void;
 }
 
-export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps) {
+export default function UnlockScreen({
+  payload,
+  onUnlocked,
+  gdriveToken,
+  isSyncing,
+  onConnectGDrive,
+  onDownloadGDrive,
+  onResetVault
+}: UnlockScreenProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +73,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
         // Encrypt of empty state
         const encrypted = await encryptVault(initialStore, password);
         localStorage.setItem('vault_payload', JSON.stringify(encrypted));
-        onUnlocked(password, [], []);
+        onUnlocked(password, [], [], encrypted);
       } else {
         if (!payload) return;
         
@@ -76,20 +89,20 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 selection:bg-neutral-800 selection:text-white" dir="rtl">
-      <div className="w-full max-w-md bg-neutral-900 rounded-xl border border-neutral-800 p-6 md:p-8 relative overflow-hidden transition-all duration-300">
+    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 selection:bg-brand-400/30 selection:text-white" dir="rtl">
+      <div className="w-full max-w-md glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden transition-all duration-300">
         
         {/* Subtle, premium glowing accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-neutral-800 via-neutral-100 to-neutral-800 opacity-60" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-400/20 via-white to-emerald-300/20 opacity-70" />
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-neutral-950 border border-neutral-800 text-neutral-200 mb-4 shadow-sm">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400/24 to-emerald-400/10 border border-white/10 text-neutral-100 mb-4 shadow-lg shadow-black/30">
             {isSetup ? <KeyRound className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
           </div>
-          <h1 className="text-xl font-bold text-white font-heading tracking-tight mb-0.5">
+          <h1 className="text-2xl font-semibold text-white font-heading tracking-tight mb-1">
             {isSetup ? 'راه‌اندازی گاوصندوق رمز عبور' : 'بازگشایی گاوصندوق محافظتی'}
           </h1>
-          <div className="text-xs text-neutral-400 mt-2 font-serif italic text-center">
+          <div className="text-sm text-neutral-400 mt-2 font-sans text-center leading-6">
             {isSetup 
               ? 'یک رمز عبور مستر قوی برای رمزگذاری تمام اطلاعات خود تعیین کنید' 
               : 'رمز مستر خود را جهت بازگشایی و رمزگشایی اطلاعات محلی وارد کنید'}
@@ -97,8 +110,8 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-950/30 border border-red-900/40 text-red-400 text-xs flex items-start gap-3">
-            <ShieldAlert className="w-4.5 h-4.5 shrink-0 mt-0.5 text-red-500" />
+          <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-500/25 text-red-300 text-xs flex items-start gap-3">
+            <ShieldAlert className="w-[18px] h-[18px] shrink-0 mt-0.5 text-red-500" />
             <span className="leading-5 font-sans">{error}</span>
           </div>
         )}
@@ -115,7 +128,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
                 placeholder="••••••••••••"
-                className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-750 rounded-lg outline-none text-white text-left font-mono placeholder:text-neutral-800 transition"
+                className="w-full px-4 py-3 field-standard rounded-xl text-left font-mono placeholder:text-neutral-700 transition"
                 required
               />
               <button
@@ -123,7 +136,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 px-3 flex items-center text-neutral-550 hover:text-white transition"
               >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
               </button>
             </div>
 
@@ -134,7 +147,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
                   <span>قدرت رمز عبور: {strength.text}</span>
                   <span className="font-mono">{password.length} کاراکتر</span>
                 </div>
-                <div className="h-1 w-full bg-neutral-950 rounded-full overflow-hidden border border-neutral-850">
+                <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden border border-white/10">
                   <div className={`h-full ${strength.color} transition-all duration-300 rounded-full`} />
                 </div>
               </div>
@@ -151,7 +164,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-750 rounded-lg outline-none text-white text-left font-mono placeholder:text-neutral-800 transition"
+                className="w-full px-4 py-3 field-standard rounded-xl text-left font-mono placeholder:text-neutral-700 transition"
                 required
               />
             </div>
@@ -159,7 +172,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
 
           {/* Zero Knowledge Safeguard Warning */}
           {isSetup && (
-            <div className="p-3.5 rounded-lg bg-amber-955/20 border border-amber-900/30 text-amber-400 text-xs flex gap-3">
+            <div className="p-3.5 rounded-xl bg-amber-955/35 border border-amber-400/20 text-amber-300 text-xs flex gap-3">
               <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
               <div className="space-y-1">
                 <p className="font-semibold text-[13px]">حفاظت دانش-صفر (Zero-Knowledge)</p>
@@ -169,8 +182,8 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
           )}
 
           {!isSetup && (
-            <div className="p-3 bg-neutral-950 border border-neutral-800/80 rounded-lg flex items-center gap-3 text-neutral-400 text-xs">
-              <ShieldCheck className="w-4.5 h-4.5 text-neutral-400 shrink-0" />
+            <div className="p-3 surface-panel rounded-xl flex items-center gap-3 text-neutral-350 text-xs">
+              <ShieldCheck className="w-[18px] h-[18px] text-neutral-400 shrink-0" />
               <span className="font-sans">محیط محلی رمزارزی AES-GCM-256 فعال است.</span>
             </div>
           )}
@@ -178,7 +191,7 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 h-11 bg-white hover:bg-neutral-200 disabled:opacity-50 text-neutral-950 font-bold text-xs rounded-lg flex items-center justify-center gap-2 cursor-pointer transition duration-150"
+            className="w-full py-3 h-11 btn-primary disabled:opacity-50 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition duration-150"
           >
             {isLoading ? (
               <span className="w-4 h-4 border-2 border-neutral-950/30 border-t-neutral-950 rounded-full animate-spin" />
@@ -195,6 +208,42 @@ export default function UnlockScreen({ payload, onUnlocked }: UnlockScreenProps)
             )}
           </button>
         </form>
+
+        <div className="mt-5 pt-5 border-t border-white/[0.08] space-y-3">
+          <div className="p-3 surface-panel rounded-xl text-[11px] text-neutral-350 leading-5">
+            برای دسترسی از هر مرورگر، ابتدا به Google Drive وصل شوید و vault رمزنگاری‌شده را بارگیری کنید. رمز مستر فقط روی همین دستگاه وارد می‌شود و به Google ارسال نمی‌شود.
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={onConnectGDrive}
+              className="py-2.5 px-3 btn-ghost text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
+            >
+              <Cloud className="w-4 h-4" />
+              {gdriveToken ? 'اتصال Google فعال است' : 'اتصال به Google Drive'}
+            </button>
+
+            <button
+              type="button"
+              onClick={onDownloadGDrive}
+              disabled={!gdriveToken || isSyncing}
+              className="py-2.5 px-3 btn-ghost disabled:opacity-50 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              بارگیری vault ابری
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={onResetVault}
+            className="w-full py-2.5 px-3 bg-rose-950/35 hover:bg-rose-950/55 border border-rose-500/25 text-rose-300 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
+          >
+            <Trash2 className="w-4 h-4" />
+            کاربر جدید / ریست کامل و راه‌اندازی از نو
+          </button>
+        </div>
       </div>
       
       {/* Footer Meta */}

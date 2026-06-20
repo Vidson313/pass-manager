@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Check, ShieldAlert, Sparkles } from 'lucide-react';
+import { secureRandomIndex } from '../utils/random';
+import { copySensitiveText } from '../utils/clipboard';
 
 interface PasswordGeneratorProps {
   onUsePassword?: (p: string) => void;
@@ -30,7 +32,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
     if (isPassphrase) {
       let selectedWords: string[] = [];
       for (let i = 0; i < wordCount; i++) {
-        const randIndex = Math.floor(Math.random() * words.length);
+        const randIndex = secureRandomIndex(words.length);
         selectedWords.push(words[randIndex]);
       }
       setPassword(selectedWords.join('-'));
@@ -61,7 +63,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
 
     let generated = '';
     for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
+      const randomIndex = secureRandomIndex(charset.length);
       generated += charset[randomIndex];
     }
     setPassword(generated);
@@ -71,11 +73,16 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
     generate();
   }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols, easyToRead, isPassphrase, wordCount]);
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (!password || password.startsWith('یک گزینه')) return;
-    navigator.clipboard.writeText(password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+
+    try {
+      await copySensitiveText(password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+    }
   };
 
   // Calculate entropy & quality
@@ -106,7 +113,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
   const strength = getEntropyInfo();
 
   return (
-    <div className={`p-5 rounded-lg bg-neutral-900 border border-neutral-800 ${inline ? 'shadow-none p-0 border-0 bg-transparent' : 'shadow-2xl'}`} dir="rtl">
+    <div className={`p-5 rounded-lg surface-panel ${inline ? 'shadow-none p-0 border-0 bg-transparent' : 'shadow-2xl'}`} dir="rtl">
       
       {/* Header */}
       {!inline && (
@@ -117,7 +124,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
       )}
 
       {/* Primary Display */}
-      <div className="relative flex items-center bg-neutral-950 border border-neutral-800 rounded-lg p-3 mb-4 overflow-hidden">
+      <div className="relative flex items-center surface-panel rounded-lg p-3 mb-4 overflow-hidden">
         <textarea
           readOnly
           value={password}
@@ -141,7 +148,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
             title="کپی کردن"
             className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-neutral-850 transition flex items-center justify-center cursor-pointer"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-450" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -158,7 +165,7 @@ export default function PasswordGenerator({ onUsePassword, inline = false }: Pas
       </div>
 
       {/* Generator Type Selector */}
-      <div className="flex bg-neutral-950 p-1 rounded-lg gap-1 mb-5 border border-neutral-850">
+      <div className="flex surface-panel p-1 rounded-lg gap-1 mb-5">
         <button
           type="button"
           onClick={() => setIsPassphrase(false)}

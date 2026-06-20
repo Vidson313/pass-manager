@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileCode, CheckCircle, AlertCircle, Eye, CornerDownLeft, EyeOff } from 'lucide-react';
 import { LoginItem, VaultItem } from '../types';
+import { createSecureId } from '../utils/random';
 
 interface CsvImporterProps {
   onImportCompleted: (importedItems: VaultItem[]) => void;
@@ -86,7 +87,7 @@ export default function CsvImporter({ onImportCompleted, onCancel }: CsvImporter
         if (!title && !username && !password) continue;
 
         items.push({
-          id: `csv-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+          id: createSecureId('csv'),
           type: 'login',
           title: title || 'رمز عبور وارد شده',
           username,

@@ -139,10 +139,10 @@ export default function SettingsPanel({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Google Drive Cloud Synced Panel */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-2xl flex flex-col justify-between">
+        <div className="glass-panel rounded-2xl p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Cloud className={`w-5.5 h-5.5 ${gdriveToken ? 'text-white' : 'text-neutral-500'}`} />
+              <Cloud className={`w-[22px] h-[22px] ${gdriveToken ? 'text-white' : 'text-neutral-500'}`} />
               <h4 className="font-bold text-white text-sm font-heading">همگام‌سازی ابری گوگل‌درایو • Cloud Sync</h4>
             </div>
             <p className="text-xs text-neutral-400 leading-5 mb-4">
@@ -150,7 +150,7 @@ export default function SettingsPanel({
             </p>
 
             {/* Connection Status */}
-            <div className="p-3.5 rounded-lg bg-neutral-950 border border-neutral-850 mb-4 flex items-center justify-between text-xs">
+            <div className="p-3.5 rounded-xl surface-panel mb-4 flex items-center justify-between text-xs">
               <span className="text-neutral-400">وضعیت اتصال:</span>
               {gdriveToken ? (
                 <span className="text-white font-bold flex items-center gap-1.5">
@@ -179,19 +179,19 @@ export default function SettingsPanel({
                 value={customClientId}
                 onChange={(e) => setCustomClientId(e.target.value)}
                 placeholder="Google Client ID اختیاری خود را وارد کنید..."
-                className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs font-mono outline-none text-white placeholder:text-neutral-750 focus:ring-0"
+                className="w-full px-3 py-2 field-standard rounded-xl text-xs font-mono placeholder:text-neutral-750"
               />
               <button
                 type="button"
                 onClick={handleSaveClientId}
-                className="w-full py-2 bg-neutral-955 hover:bg-neutral-850 border border-neutral-800 font-bold text-[11px] rounded-lg text-neutral-300 transition cursor-pointer"
+                className="w-full py-2 btn-ghost font-bold text-[11px] rounded-xl transition cursor-pointer"
               >
                 بروزرسانی Client ID
               </button>
             </div>
 
             {showInstructions && (
-              <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-lg mb-4 text-[11px] text-neutral-400 space-y-2 leading-4">
+              <div className="p-3 surface-panel rounded-xl mb-4 text-[11px] text-neutral-350 space-y-2 leading-4">
                 <p className="font-bold text-white">مراحل ۳ دقیقه‌ای دریافت شناسه شخصی گوگل:</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>به Console.cloud.google.com مراجعه کنید و یک پروژه بسازید.</li>
@@ -214,7 +214,7 @@ export default function SettingsPanel({
                   type="button"
                   onClick={onSyncManual}
                   disabled={isSyncing}
-                  className="flex-1 py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 py-2.5 btn-primary font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                   <span>همگام سازی کانتینری</span>
@@ -222,7 +222,7 @@ export default function SettingsPanel({
                 <button
                   type="button"
                   onClick={onDisconnectGDrive}
-                  className="px-3.5 py-2.5 bg-neutral-950 hover:bg-neutral-850 border border-neutral-800 text-rose-500 font-bold text-xs rounded-lg transition cursor-pointer"
+                  className="px-3.5 py-2.5 btn-ghost text-rose-500 font-bold text-xs rounded-lg transition cursor-pointer"
                 >
                   قطع ارتباط
                 </button>
@@ -231,7 +231,7 @@ export default function SettingsPanel({
               <button
                 type="button"
                 onClick={onConnectGDrive}
-                className="w-full py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 btn-primary font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Cloud className="w-4 h-4" />
                 <span>اتصال ابری به گوگل‌درایو (Google Drive)</span>
@@ -241,10 +241,10 @@ export default function SettingsPanel({
         </div>
 
         {/* Change Master Password Panel */}
-        <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-2xl flex flex-col justify-between">
+        <div className="glass-panel rounded-2xl p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <KeyRound className="w-5.5 h-5.5 text-white" />
+              <KeyRound className="w-[22px] h-[22px] text-white" />
               <h4 className="font-bold text-white text-sm font-heading">تغییر رمز عبور مستر (Master)</h4>
             </div>
             <p className="text-xs text-neutral-400 leading-5 mb-4">
@@ -252,13 +252,13 @@ export default function SettingsPanel({
             </p>
 
             {pwError && (
-              <div className="p-3.5 rounded-lg bg-neutral-950 border border-neutral-800 text-rose-450 text-xs mb-3">
+              <div className="p-3.5 rounded-lg surface-panel text-rose-400 text-xs mb-3">
                 {pwError}
               </div>
             )}
 
             {pwSuccess && (
-              <div className="p-3.5 rounded-lg bg-neutral-950 border border-neutral-800 text-white text-xs mb-3">
+              <div className="p-3.5 rounded-lg surface-panel text-white text-xs mb-3">
                 {pwSuccess}
               </div>
             )}
@@ -270,7 +270,7 @@ export default function SettingsPanel({
               placeholder="رمز مستر فعلی شما"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
+              className="w-full px-3.5 py-2.5 surface-panel focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
               required
             />
             <input
@@ -278,7 +278,7 @@ export default function SettingsPanel({
               placeholder="رمز مستر جدید (حداقل ۸ کاراکتر)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
+              className="w-full px-3.5 py-2.5 surface-panel focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
               required
             />
             <input
@@ -286,12 +286,12 @@ export default function SettingsPanel({
               placeholder="تکرار رمز مستر جدید"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
+              className="w-full px-3.5 py-2.5 surface-panel focus:border-neutral-500 rounded-lg text-xs outline-none text-white placeholder:text-neutral-700 focus:ring-0"
               required
             />
             <button
               type="submit"
-              className="w-full py-2.5 bg-white hover:bg-neutral-200 text-neutral-950 font-bold text-xs rounded-lg transition cursor-pointer"
+              className="w-full py-2.5 btn-primary font-bold text-xs rounded-lg transition cursor-pointer"
             >
               تأیید و به‌روزرسانی نهایی رمز
             </button>
@@ -300,7 +300,7 @@ export default function SettingsPanel({
       </div>
 
       {/* Advanced Backup Actions */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-2xl">
+      <div className="surface-panel rounded-xl p-5 shadow-2xl">
         <h4 className="font-bold text-white text-sm mb-3 font-heading">واردکردن/خروجی گرفتن از پایگاه داده (Zero-Knowledge Import/Export)</h4>
         <p className="text-xs text-neutral-400 leading-5 mb-5">
            با کلیک روی دکمه‌های زیر می‌توانید یک لوح یا پشتیبان آفلاین از داده‌های رمزنگاری شده کپی کنید یا فایل CSV را برای وارد کردن فعال نمایید.
@@ -309,21 +309,21 @@ export default function SettingsPanel({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <button
             onClick={onTriggerCsvImport}
-            className="p-3 bg-neutral-950 hover:bg-neutral-850/65 border border-neutral-850 text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
+            className="p-3 surface-panel card-hover text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
           >
             <Chrome className="w-5 h-5 text-white" />
             <span>واردکردن از فایل قدیمی CSV</span>
           </button>
           <button
             onClick={downloadEncryptedJson}
-            className="p-3 bg-neutral-950 hover:bg-neutral-850/65 border border-neutral-850 text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
+            className="p-3 surface-panel card-hover text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
           >
             <Download className="w-5 h-5 text-white" />
             <span>دانلود نسخه پشتیبان (Encrypted JSON)</span>
           </button>
           <button
             onClick={downloadDecryptedCsv}
-            className="p-3 bg-neutral-950 hover:bg-neutral-850/65 border border-neutral-850 text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
+            className="p-3 surface-panel card-hover text-neutral-300 rounded-lg text-xs font-bold select-none flex flex-col items-center gap-1.5 transition cursor-pointer"
           >
             <ShieldAlert className="w-5 h-5 text-rose-500 animate-pulse" />
             <span>خروجی گرفتن بازنشده (Decrypted CSV)</span>
@@ -332,7 +332,7 @@ export default function SettingsPanel({
       </div>
 
       {/* Dangerous/Master Reset Actions */}
-      <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="surface-panel rounded-lg p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <h4 className="font-bold text-rose-500 text-sm flex items-center gap-2">
             <Trash2 className="w-5 h-5 shrink-0" />
