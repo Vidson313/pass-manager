@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Download, KeyRound, Trash2, RefreshCw, Chrome, Cloud } from 'lucide-react';
 import { UserSettings, VaultState } from '../types';
+import { useToast } from './ToastProvider';
 
 interface SettingsPanelProps {
   settings: UserSettings;
@@ -29,6 +30,7 @@ export default function SettingsPanel({
   onSyncManual,
   isSyncing
 }: SettingsPanelProps) {
+  const { showToast } = useToast();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -55,6 +57,7 @@ export default function SettingsPanel({
       const success = await onChangeMasterPassword(oldPassword, newPassword);
       if (success) {
         setPwSuccess('رمز عبور مستر با موفقیت تغییر یافت و اطلاعات گاوصندوق مجدداً با کلید جدید رمزگذاری شد.');
+        showToast({ type: 'success', title: 'رمز مستر تغییر کرد', description: 'vault با کلید جدید دوباره رمزنگاری شد.' });
         setOldPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
@@ -71,7 +74,7 @@ export default function SettingsPanel({
       ...settings,
       googleClientId: customClientId.trim() || undefined
     });
-    alert('نشانه Client ID گوگل با موفقیت ذخیره شد.');
+    showToast({ type: 'success', title: 'Client ID ذخیره شد', description: 'شناسه Google OAuth برای اتصال های بعدی استفاده می شود.' });
   };
 
   const downloadEncryptedJson = () => {

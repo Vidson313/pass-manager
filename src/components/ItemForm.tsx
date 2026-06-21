@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Sparkles, Folder as FolderIcon, Tag, Save, ArrowLeft, KeyRound, CreditCard, StickyNote, HelpCircle } from 'lucide-react';
 import { VaultItem, Folder, ItemType } from '../types';
+import { useToast } from './ToastProvider';
 import PasswordGenerator from './PasswordGenerator';
 import { createSecureId } from '../utils/random';
 
@@ -12,6 +13,7 @@ interface ItemFormProps {
 }
 
 export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormProps) {
+  const { showToast } = useToast();
   const isEditing = !!item;
   const [type, setType] = useState<ItemType>(item?.type || 'login');
   const [title, setTitle] = useState(item?.title || '');
@@ -43,7 +45,7 @@ export default function ItemForm({ item, folders, onSave, onCancel }: ItemFormPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('لطفاً عنوان گاوصندوق را وارد کنید.');
+      showToast({ type: 'warning', title: 'عنوان لازم است', description: 'برای ذخیره آیتم، یک عنوان قابل تشخیص وارد کنید.' });
       return;
     }
 

@@ -13,9 +13,11 @@ import PasswordGenerator from './components/PasswordGenerator';
 import CsvImporter from './components/CsvImporter';
 import SettingsPanel from './components/SettingsPanel';
 import AboutPanel from './components/AboutPanel';
+import { useToast } from './components/ToastProvider';
 import ItemForm from './components/ItemForm';
 
 export default function App() {
+  const { showToast } = useToast();
   // Authentication & Master Password State
   const [masterPassword, setMasterPassword] = useState<string | null>(null);
   const [vaultPayload, setVaultPayload] = useState<EncryptedVaultPayload | null>(() => {
@@ -283,9 +285,9 @@ export default function App() {
         if (!uploadContentRes.ok) throw new Error('خطا در بارگذاری محتوای فایل ابری جدید.');
       }
       
-      console.log('Synchronised with cloud successfully!');
+      showToast({ type: 'success', title: 'همگام سازی انجام شد', description: 'vault رمزنگاری شده با Google Drive به روز شد.' });
     } catch (e: any) {
-      alert(`خطای همگام‌سازی ابری: ${e.message}`);
+      showToast({ type: 'error', title: 'خطای همگام سازی ابری', description: e.message });
     } finally {
       setIsSyncing(false);
     }
@@ -304,7 +306,7 @@ export default function App() {
       const searchData = await searchRes.json();
       
       if (!searchData.files || searchData.files.length === 0) {
-        alert('هیچ فایل رمزگذاری شده‌ای (vault.enc) روی گوگل درایو شما پیدا نشد.');
+        showToast({ type: 'warning', title: 'فایل ابری پیدا نشد', description: 'هیچ فایل رمزگذاری شده ای با نام vault.enc روی Google Drive شما وجود ندارد.' });
         return;
       }
 
@@ -327,7 +329,7 @@ export default function App() {
       if (!masterPassword) {
         localStorage.setItem('vault_payload', JSON.stringify(payload));
         setVaultPayload(payload);
-        alert('vault رمزنگاری‌شده از Google Drive دریافت شد. اکنون رمز مستر خود را وارد کنید.');
+        showToast({ type: 'success', title: 'vault ابری دریافت شد', description: 'اکنون رمز مستر خود را وارد کنید تا اطلاعات رمزگشایی شود.' });
         return;
       }
       
@@ -343,10 +345,10 @@ export default function App() {
           window.location.reload(); // Quick refresh to load decrypted state
         }
       } else {
-        alert('خطای هموارسازی: پسورد ابری و پسورد فعلی مستر شما یکسان نیستند.');
+        showToast({ type: 'error', title: 'رمز مستر ناهماهنگ است', description: 'پسورد ابری و پسورد فعلی مستر شما یکسان نیستند.' });
       }
     } catch (err: any) {
-      alert(`بارگیری با خطا مواجه شد: ${err.message}`);
+      showToast({ type: 'error', title: 'بارگیری با خطا مواجه شد', description: err.message });
     } finally {
       setIsSyncing(false);
     }
@@ -525,10 +527,11 @@ export default function App() {
     try {
       await copySensitiveText(val);
       setClipboardCopyField(fieldName || 'generic');
+      showToast({ type: 'success', title: 'کپی شد', description: 'مقدار انتخاب شده بعد از مدت کوتاهی از clipboard پاک می شود.' });
       setTimeout(() => setClipboardCopyField(null), 1500);
     } catch (error) {
       console.error('Clipboard copy failed:', error);
-      alert('کپی کردن در کلیپ‌بورد با خطا مواجه شد.');
+      showToast({ type: 'error', title: 'کپی در کلیپ بورد ناموفق بود', description: 'مجوز clipboard یا دسترسی سیستم را بررسی کنید.' });
     }
   };
 
@@ -544,6 +547,7 @@ export default function App() {
     }
 
     saveVaultChanges(nextItems, folders);
+    showToast({ type: 'success', title: 'مورد ذخیره شد', description: `${saved.title} با موفقیت در vault رمزنگاری شد.` });
     setSelectedItemId(saved.id);
     setActiveView('dashboard');
   };
@@ -554,7 +558,10 @@ export default function App() {
 
     const nextItems = items.filter(i => i.id !== id);
     saveVaultChanges(nextItems, folders);
-    setSelectedItemId(null);
+    showToast({ type: 'success', title: 'مورد حذف شد', description: 'آیتم انتخاب شده از vault پاک شد.' });
+    if (selectedItemId === id) {
+      setSelectedItemId(null);
+    }
   };
 
   const handleCreateFolder = (e: React.FormEvent) => {
@@ -568,6 +575,7 @@ export default function App() {
     };
 
     saveVaultChanges(items, [...folders, newFolder]);
+    showToast({ type: 'success', title: 'پوشه ساخته شد', description: `پوشه ${newFolder.name} آماده استفاده است.` });
     setNewFolderName('');
     setShowFolderModal(false);
   };
@@ -582,6 +590,7 @@ export default function App() {
     );
 
     saveVaultChanges(nextItems, nextFolders);
+    showToast({ type: 'success', title: 'پوشه حذف شد', description: 'آیتم های داخل پوشه حفظ شدند و فقط دسته بندی حذف شد.' });
     setSelectedFolderId(null);
   };
 
@@ -589,7 +598,7 @@ export default function App() {
     const nextItems = [...imported, ...items];
     saveVaultChanges(nextItems, folders);
     setActiveView('dashboard');
-    alert(`تعداد ${imported.length} رمز جدید با موفقیت پلمپ و پایگاه داده محلی بروزرسانی شد.`);
+    showToast({ type: 'success', title: 'Import با موفقیت انجام شد', description: `تعداد ${imported.length} مورد جدید رمزنگاری و ذخیره شد.` });
   };
 
   // Return logon page if no master pass

@@ -283,3 +283,103 @@ textarea:disabled {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(208, 214, 224, 0.48);
 }
+
+.toast-viewport {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 9999;
+  display: flex;
+  width: min(24rem, calc(100vw - 2rem));
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.toast-card {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 16, 17, 0.94);
+  padding: 0.875rem;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+  animation: toast-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toast-icon {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.875rem;
+  border-width: 1px;
+}
+
+.toast-close {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: #8a8f98;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f8f8;
+}
+
+.toast-progress-track {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.toast-progress {
+  height: 100%;
+  transform-origin: right center;
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(-18px, -8px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .toast-viewport {
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+}
