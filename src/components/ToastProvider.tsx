@@ -32,8 +32,8 @@ const defaultDurations: Record<ToastType, number | null> = {
 const toastStyles: Record<ToastType, { icon: typeof CheckCircle2; accent: string; ring: string }> = {
   success: {
     icon: CheckCircle2,
-    accent: 'text-emerald-300 bg-emerald-400/10 border-emerald-400/25',
-    ring: 'bg-emerald-400',
+    accent: 'text-brand-300 bg-brand-400/10 border-brand-400/25',
+    ring: 'bg-brand-400',
   },
   error: {
     icon: ShieldAlert,
@@ -47,8 +47,8 @@ const toastStyles: Record<ToastType, { icon: typeof CheckCircle2; accent: string
   },
   info: {
     icon: Info,
-    accent: 'text-sky-300 bg-sky-400/10 border-sky-400/25',
-    ring: 'bg-sky-400',
+    accent: 'text-neutral-300 bg-neutral-300/10 border-neutral-300/25',
+    ring: 'bg-neutral-300',
   },
 };
 

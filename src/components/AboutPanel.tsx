@@ -1,4 +1,4 @@
-import { ShieldCheck, KeyRound, Cloud, Cpu, Lock, Github, ExternalLink } from 'lucide-react';
+import { ShieldCheck, KeyRound, Cloud, Cpu, Lock, Github, ExternalLink, HeartHandshake, Wallet } from 'lucide-react';
 import {
   APP_AUTHOR,
   APP_GITHUB_URL,
@@ -26,6 +26,12 @@ export default function AboutPanel({ itemCount, folderCount, gdriveConnected }: 
     'Windows desktop packaging with Electron and NSIS',
   ];
 
+  const donationWallets = [
+    { network: 'USDT TRC20', address: 'آدرس کیف پول را اینجا وارد کنید' },
+    { network: 'TON', address: 'آدرس کیف پول را اینجا وارد کنید' },
+    { network: 'Bitcoin', address: 'آدرس کیف پول را اینجا وارد کنید' },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto space-y-6" dir="rtl">
       <section className="glass-panel rounded-3xl p-6 md:p-8 overflow-hidden relative">
@@ -33,7 +39,7 @@ export default function AboutPanel({ itemCount, folderCount, gdriveConnected }: 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 status-pill">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-brand-400" />
               نسخه پایدار {APP_VERSION}
             </div>
             <div>
@@ -70,7 +76,7 @@ export default function AboutPanel({ itemCount, folderCount, gdriveConnected }: 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="glass-panel rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <ShieldCheck className="w-5 h-5 text-brand-300" />
             <h3 className="section-title text-base">مدل امنیتی</h3>
           </div>
           <p className="text-xs text-neutral-400 leading-6 mb-4">
@@ -125,8 +131,34 @@ export default function AboutPanel({ itemCount, folderCount, gdriveConnected }: 
       </div>
 
       <section className="glass-panel rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <HeartHandshake className="w-5 h-5 text-brand-300" />
+          <h3 className="section-title text-base">حمایت مالی از توسعه‌دهنده</h3>
+        </div>
+        <p className="text-xs text-neutral-400 leading-6 mb-4">
+          اگر کلیدبان برای شما مفید بوده، می‌توانید با دونیت ارز دیجیتال از ادامه توسعه، رفع باگ‌ها و اضافه شدن قابلیت‌های جدید حمایت کنید.
+        </p>
+        <div className="space-y-3">
+          {donationWallets.map((wallet) => (
+            <div key={wallet.network} className="surface-panel rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-brand-300" />
+                  <span className="text-xs font-bold text-white">{wallet.network}</span>
+                </div>
+                <span className="text-[10px] text-neutral-500">Crypto Wallet</span>
+              </div>
+              <p className="font-mono text-[11px] text-neutral-300 ltr text-left break-all select-all bg-neutral-950/60 border border-white/5 rounded-xl px-3 py-2">
+                {wallet.address}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Cloud className="w-5 h-5 text-sky-300" />
+          <Cloud className="w-5 h-5 text-neutral-300" />
           <h3 className="section-title text-base">مسیر انتشار حرفه‌ای</h3>
         </div>
         <p className="text-xs text-neutral-400 leading-6">

@@ -625,7 +625,7 @@ export default function App() {
       {/* Upper Navigation Bar */}
       <header className="bg-[#0f1011]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3.5 flex items-center justify-between sticky top-0 z-40 transition-colors duration-300">
         <div className="flex items-center gap-2 md:gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400/25 to-emerald-400/10 border border-white/10 flex items-center justify-center text-neutral-200 shadow-lg shadow-black/25">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400/25 to-neutral-300/10 border border-white/10 flex items-center justify-center text-neutral-200 shadow-lg shadow-black/25">
             <KeyRound className="w-5 h-5 text-neutral-300" />
           </div>
           <div>

@@ -1,31 +1,103 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-UltraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-DemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANSansX";
+  src: url("./assets/fonts/iransansx/IRANSansX-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  --font-serif: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-heading: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-serif: "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "IRANSansX", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IRANSansX", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  --color-neutral-955: #020617;
-  --color-neutral-950: #05070d;
-  --color-neutral-900: #0b0f17;
-  --color-neutral-850: #111827;
-  --color-neutral-800: #1f2937;
-  --color-neutral-750: #273244;
-  --color-neutral-705: #334155;
-  --color-neutral-700: #374151;
-  --color-neutral-600: #4b5563;
-  --color-neutral-550: #64748b;
-  --color-neutral-500: #6b7280;
-  --color-neutral-450: #94a3b8;
-  --color-neutral-405: #a7b0c0;
-  --color-neutral-350: #cbd5e1;
-  --color-neutral-300: #d1d5db;
-  --color-neutral-205: #eef2ff;
+  --color-neutral-955: #050505;
+  --color-neutral-950: #0a0a0a;
+  --color-neutral-900: #111111;
+  --color-neutral-850: #171717;
+  --color-neutral-800: #222222;
+  --color-neutral-750: #2b2b2b;
+  --color-neutral-705: #3a3a3a;
+  --color-neutral-700: #454545;
+  --color-neutral-600: #5f5f5f;
+  --color-neutral-550: #777777;
+  --color-neutral-500: #8e8e8e;
+  --color-neutral-450: #a6a6a6;
+  --color-neutral-405: #b8b8b8;
+  --color-neutral-350: #d4d4d4;
+  --color-neutral-300: #e5e5e5;
+  --color-neutral-205: #f2f2f2;
 
-  --color-brand-500: #5e6ad2;
-  --color-brand-400: #7170ff;
-  --color-brand-300: #8b8cff;
+  --color-brand-500: #f97316;
+  --color-brand-400: #fb923c;
+  --color-brand-300: #fdba74;
   --color-amber-955: #2b1d05;
 }
 
@@ -35,16 +107,16 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --app-bg: #08090a;
-  --app-panel: #0f1011;
-  --app-surface: #191a1b;
-  --app-surface-2: #202124;
+  --app-bg: #090908;
+  --app-panel: #11100f;
+  --app-surface: #1b1a18;
+  --app-surface-2: #252321;
   --app-border: rgba(255, 255, 255, 0.08);
   --app-border-soft: rgba(255, 255, 255, 0.05);
   --app-text: #f7f8f8;
   --app-muted: #8a8f98;
   --app-subtle: #62666d;
-  --app-accent: #7170ff;
+  --app-accent: #fb923c;
 }
 
 * {
@@ -66,9 +138,9 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: "cv01", "ss03";
   background:
-    radial-gradient(circle at 18% 0%, rgba(113, 112, 255, 0.16), transparent 28rem),
-    radial-gradient(circle at 100% 16%, rgba(16, 185, 129, 0.07), transparent 24rem),
-    linear-gradient(180deg, #08090a 0%, #05070d 100%);
+    radial-gradient(circle at 18% 0%, rgba(249, 115, 22, 0.18), transparent 28rem),
+    radial-gradient(circle at 100% 16%, rgba(212, 212, 212, 0.07), transparent 24rem),
+    linear-gradient(180deg, #090908 0%, #0a0a0a 100%);
   color: var(--app-text);
 }
 
@@ -100,12 +172,12 @@ textarea:disabled {
 }
 
 :focus-visible {
-  outline: 2px solid rgba(113, 112, 255, 0.9);
+  outline: 2px solid rgba(251, 146, 60, 0.9);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(113, 112, 255, 0.35);
+  background: rgba(249, 115, 22, 0.35);
   color: #ffffff;
 }
 
@@ -117,8 +189,8 @@ textarea:disabled {
 @layer components {
   .app-shell {
     background:
-      radial-gradient(circle at top left, rgba(113, 112, 255, 0.12), transparent 24rem),
-      radial-gradient(circle at bottom right, rgba(94, 106, 210, 0.08), transparent 28rem),
+      radial-gradient(circle at top left, rgba(249, 115, 22, 0.14), transparent 24rem),
+      radial-gradient(circle at bottom right, rgba(212, 212, 212, 0.08), transparent 28rem),
       var(--app-bg);
   }
 
@@ -152,21 +224,21 @@ textarea:disabled {
   }
 
   .field-standard:focus {
-    border-color: rgba(113, 112, 255, 0.76);
-    box-shadow: 0 0 0 3px rgba(113, 112, 255, 0.16);
+    border-color: rgba(251, 146, 60, 0.76);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.16);
     background: rgba(255, 255, 255, 0.06);
     outline: none;
   }
 
   .btn-primary {
-    background: #5e6ad2;
+    background: #f97316;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 12px 34px rgba(94, 106, 210, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 34px rgba(249, 115, 22, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
 
   .btn-primary:hover {
-    background: #7170ff;
+    background: #fb923c;
     transform: translateY(-1px);
   }
 
@@ -250,7 +322,7 @@ textarea:disabled {
   }
 
   body {
-    background: #08090a;
+    background: #090908;
   }
 }
 
@@ -271,12 +343,12 @@ textarea:disabled {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(8, 9, 10, 0.88);
+  background: rgba(9, 9, 8, 0.88);
 }
 
 ::-webkit-scrollbar-thumb {
   background: rgba(138, 143, 152, 0.36);
-  border: 2px solid rgba(8, 9, 10, 0.88);
+  border: 2px solid rgba(9, 9, 8, 0.88);
   border-radius: 999px;
 }
 

@@ -93,10 +93,10 @@ export default function UnlockScreen({
       <div className="w-full max-w-md glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden transition-all duration-300">
         
         {/* Subtle, premium glowing accent line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-400/20 via-white to-emerald-300/20 opacity-70" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand-400/20 via-neutral-300 to-brand-300/20 opacity-70" />
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400/24 to-emerald-400/10 border border-white/10 text-neutral-100 mb-4 shadow-lg shadow-black/30">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400/24 to-neutral-300/10 border border-white/10 text-neutral-100 mb-4 shadow-lg shadow-black/30">
             {isSetup ? <KeyRound className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
           </div>
           <h1 className="text-2xl font-semibold text-white font-heading tracking-tight mb-1">
